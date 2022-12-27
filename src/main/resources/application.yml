@@ -1,0 +1,19 @@
+spring:
+  data:
+    mongodb:
+      uri: mongodb://zzz:zzz@101.43.193.226:27017/iothub?authSource=admin
+
+  datasource:
+    username: user1
+    password:
+    url: jdbc:mysql://101.43.193.226:3306/forestry?serverTimezone=Asia/Shanghai&userUnicode=true&characterEncoding=utf-8
+
+  influx:
+    url: http://101.43.193.226:8086
+    database: iothub
+  mvc:
+    pathmatch:
+      matching-strategy: ant_path_matcher
+apiAuth:
+  api_key: "72db4db16f546485"
+  api_secret: "5bzMuud6RjLFiAKCF7NRpXy5HWZhScG8xwCYrfCrvBL"
