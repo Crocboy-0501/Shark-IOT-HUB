@@ -1,8 +1,13 @@
 package com.zhiiothub.v1.utils;
 
 import org.springframework.stereotype.Component;
-
 import java.util.UUID;
+
+/**
+ * 生成短Uuid工具类
+ * @Author CSDN
+ *
+ * */
 @Component
 public class ShortUuid {
     public static String[] chars = new String[] { "a", "b", "c", "d", "e", "f",

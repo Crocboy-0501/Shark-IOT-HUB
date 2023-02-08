@@ -8,8 +8,6 @@ import org.influxdb.dto.QueryResult;
 import org.springframework.beans.BeanWrapperImpl;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Configuration;
-
-import java.awt.*;
 import java.sql.Timestamp;
 import java.time.ZonedDateTime;
 import java.util.ArrayList;
@@ -17,7 +15,11 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
-
+/**
+* @description:  创建influx操作配置类
+* @author: zhangh
+* @time: 2022/12/31 11:15 AM
+*/
 @Configuration
 public class InfluxDBTemplate {
     private final InfluxdbProperties influxdbProperties;
@@ -27,14 +29,27 @@ public class InfluxDBTemplate {
         this.influxdbProperties = influxdbProperties;
         getInfluxDB();
     }
-
+    /**
+     * 获取连接
+     * */
     public void getInfluxDB(){
         if(influxDB == null){
-            influxDB = InfluxDBFactory.connect(influxdbProperties.getUrl());
-            influxDB.setDatabase(influxdbProperties.getDatabase());
+            influxDB = InfluxDBFactory.connect(influxdbProperties.getUrl(),
+                    influxdbProperties.getUsername(),
+                    influxdbProperties.getPassword());
+            if(influxDB.databaseExists(influxdbProperties.getDatabase()))
+            {
+                influxDB.setDatabase(influxdbProperties.getDatabase());
+            }else {
+                influxDB.createDatabase(influxdbProperties.getDatabase());
+                influxDB.setDatabase(influxdbProperties.getDatabase());
+            };
+
         }
     }
-
+    /**
+    * 关闭连接
+    * */
     public void close(){
         if(influxDB != null){
             influxDB.close();
@@ -42,18 +57,51 @@ public class InfluxDBTemplate {
     }
 
     public void write(String measurement, Map<String, String> tags, Map<String, Object> fields, long time, TimeUnit unit){
+        /**
+        * @description:  指定时间插入
+         * @param tags 标签
+         * @param fields 字段
+         * @param time 时间
+         * @param unit 单位
+        * @return: void
+        * @author: zhangh
+        * @time: 2022/12/31 2:19 PM
+        */
         Point point = Point.measurement(measurement).tag(tags).fields(fields).time(time, unit).build();
         influxDB.write(point);
         close();
     }
 
     public void write(String measurement, Map<String, String> tags, Map<String, Object> fields){
+        /**
+        * @description:  插入数据-自动生成时间
+         * @param measurement 表
+         * @param tags 标签
+         * @param fields 字段
+         *
+        * @return: void
+        * @author: zhangh
+        * @time: 2022/12/31 2:27 PM
+        */
         write(measurement, tags, fields, System.currentTimeMillis(), TimeUnit.MILLISECONDS);
     }
 
     public <T> java.util.List<T> handleQueryResult(QueryResult queryResult, Class<T> clazz){
+        /**
+        * @description:  查询封装
+         * @param queryResult 查询返回结果
+         * @param clazz 封装对象类型
+         * @param T 泛型
+        * @return: java.util.List<T>
+        * @author: zhangh
+        * @time: 2022/12/31 2:28 PM
+        */
         java.util.List<T> lists = new ArrayList<>();
         java.util.List<QueryResult.Result> results = queryResult.getResults();
+        //判断设备表是否为空
+        if(results.get(0).getSeries()==null){
+            return null;
+        }
         results.forEach(result -> {
             java.util.List<QueryResult.Series> seriesList = result.getSeries();
             seriesList.forEach(series -> {
@@ -88,6 +136,14 @@ public class InfluxDBTemplate {
         return influxDB.query(new Query(command));
     }
     public <T> List<T> query(String selectCommand, Class<T> clazz){
+        /**
+        * @description:
+         * @param selectCommand select 语句
+         * @param clazz 类型
+        * @return: java.util.List<T>
+        * @author: zhangh
+        * @time: 2022/12/31 2:32 PM
+        */
         return handleQueryResult(query(selectCommand), clazz);
     }
 }

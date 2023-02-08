@@ -2,8 +2,11 @@ package com.zhiiothub.v1.model;
 
 import java.util.HashMap;
 import java.util.Map;
-
-public class Status {
+/**
+ * 设备状态表模型
+ * @author zhangh
+ * */
+public class InfluxMod {
     private long time;
     private Map<String, String> tags = new HashMap<>();
     private Map<String, Object> fields = new HashMap<>();

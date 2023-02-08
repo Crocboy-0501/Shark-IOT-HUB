@@ -1,6 +1,6 @@
-package com.zhiiothub.v1.controller.dto;
+package com.zhiiothub.v1.model;
 
-public class CmdMessageDto {
+public class CmdMessageToEmq {
     private String topic;
     private String payload;
 
