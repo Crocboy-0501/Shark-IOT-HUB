@@ -21,3 +21,6 @@ spring:
 apiAuth:
   api_key: "72db4db16f546485"
   api_secret: "5bzMuud6RjLFiAKCF7NRpXy5HWZhScG8xwCYrfCrvBL"
+
+imgFile:
+  file_path: "./"

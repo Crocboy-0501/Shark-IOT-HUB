@@ -2,15 +2,19 @@ package com.zhiiothub.v1.controller;
 
 import com.zhiiothub.v1.dao.imp.DeviceDaoImp;
 import com.zhiiothub.v1.dao.imp.UpDataImp;
-import com.zhiiothub.v1.model.CmdMessage;
-import com.zhiiothub.v1.model.DeviceMongoDB;
-import com.zhiiothub.v1.model.UpMessage;
+import com.zhiiothub.v1.model.*;
 import com.zhiiothub.v1.utils.CmdToDevices;
+import com.zhiiothub.v1.utils.common.ReqResults;
 import com.zhiiothub.v1.utils.ShortUuid;
+import org.apache.tomcat.util.http.fileupload.IOUtils;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.web.bind.annotation.*;
-import com.zhiiothub.v1.model.InfluxMod;
+import org.springframework.web.multipart.MultipartFile;
 
+import java.io.FileOutputStream;
+import java.io.IOException;
+import java.io.InputStream;
 import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.List;
@@ -33,6 +37,9 @@ public class devController {
     CmdToDevices cmdToDevices;
     @Autowired
     UpDataImp upDataImp;
+    @Value("${imgFile.file_path}")
+    private String file_path;
+
     @GetMapping("/devsDetail/{device_name}")
     public List<DeviceMongoDB> getDeviceDetail(@PathVariable("device_name") String device_name){
         System.out.println(deviceDaoImp.findByDeviceName(device_name));
@@ -130,6 +137,7 @@ public class devController {
     //接收前端下发数据,接收为json格式
     //@RequestBody映射实体类json数据首字母不要大写，驼峰命名法'
     //前端请求Content-Type为application/json
+    
     @PostMapping("/cmd")
     public String cmdDevices(@RequestBody CmdMessage cmdMessage){
         System.out.println(cmdMessage.toString());
@@ -143,6 +151,44 @@ public class devController {
         return cmdMessage.toString();
     }
 
+    @PostMapping("/uploadImg")
+    @ResponseBody
+    public ReqResults uploadImag(@RequestParam("img") MultipartFile req, ImgParams imgModel){
+        /**
+        * @description: 接收对象（上传图片及环境参数）
+        * @return: void
+        * @author: zhanghc
+        * @time: 2023/2/9 20:03
+        */
+        //String fileName = req.getFile().getOriginalFilename();
+        String fileName = req.getOriginalFilename();
+
+
+        System.out.println("完整文件名 = " + fileName);
+        System.out.println("username = " + imgModel.getUsername());
+        InputStream inputStream = null;
+        FileOutputStream fileOut = null;
+        try {
+            inputStream = req.getInputStream();
+            fileOut = new FileOutputStream(file_path + fileName);//这里可以改路径
+            IOUtils.copy(inputStream, fileOut);
+            fileOut.flush();
+        } catch (IOException e) {
+            e.printStackTrace();
+        }finally {
+            try {
+                if (inputStream != null) {
+                    inputStream.close();
+                }
+                if (fileOut != null) {
+                    fileOut.close();
+                }
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+        }
+        return ReqResults.success();
+    }
     @PostMapping("/test")
     public String cmd(@RequestBody List<Map<String, Object>> params){
         System.out.println(params);
