@@ -6,8 +6,8 @@ import com.zhiiothub.v1.dao.imp.DeviceDaoImp;
 import com.zhiiothub.v1.dao.imp.UpDataImp;
 import com.zhiiothub.v1.model.*;
 import com.zhiiothub.v1.utils.CmdToDevices;
-import com.zhiiothub.v1.utils.common.ReqResults;
 import com.zhiiothub.v1.utils.ShortUuid;
+import com.zhiiothub.v1.utils.common.ReqResults;
 import org.apache.poi.ss.usermodel.Workbook;
 import org.apache.tomcat.util.http.fileupload.IOUtils;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -15,7 +15,6 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
-import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;

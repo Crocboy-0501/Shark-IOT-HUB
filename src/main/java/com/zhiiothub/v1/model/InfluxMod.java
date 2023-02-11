@@ -2,15 +2,12 @@ package com.zhiiothub.v1.model;
 
 import cn.afterturn.easypoi.excel.annotation.Excel;
 import cn.afterturn.easypoi.excel.annotation.ExcelEntity;
-import cn.afterturn.easypoi.excel.annotation.ExcelIgnore;
 import cn.afterturn.easypoi.excel.annotation.ExcelTarget;
 import lombok.Data;
 
 import java.io.Serializable;
 import java.util.HashMap;
-import java.util.Iterator;
 import java.util.Map;
-import java.util.Set;
 
 /**
  * 设备状态表模型
@@ -52,8 +49,7 @@ public class InfluxMod implements Serializable {
         influxEnvMod.setVoltage(fields.get("voltage").toString());
         return influxEnvMod;
     }
-
-    //    @Excel(name="湿度")
+//    @Excel(name="湿度")
 //    private String hum;
 
 //    public String getHum() {
