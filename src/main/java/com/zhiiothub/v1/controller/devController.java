@@ -1,17 +1,21 @@
 package com.zhiiothub.v1.controller;
 
+import cn.afterturn.easypoi.excel.ExcelExportUtil;
+import cn.afterturn.easypoi.excel.entity.ExportParams;
 import com.zhiiothub.v1.dao.imp.DeviceDaoImp;
 import com.zhiiothub.v1.dao.imp.UpDataImp;
 import com.zhiiothub.v1.model.*;
 import com.zhiiothub.v1.utils.CmdToDevices;
 import com.zhiiothub.v1.utils.common.ReqResults;
 import com.zhiiothub.v1.utils.ShortUuid;
+import org.apache.poi.ss.usermodel.Workbook;
 import org.apache.tomcat.util.http.fileupload.IOUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
+import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
@@ -88,6 +92,12 @@ public class devController {
         return client;
     }
     @GetMapping("/influxData/{measurement}")
+    /**
+    * @description: 查找{measurement}库的数据
+    * @return: java.util.List<com.zhiiothub.v1.model.InfluxMod>
+    * @author: zhanghc
+    * @time: 2023/2/10 21:10
+    */ 
     public List<InfluxMod> testQueryIothub(@PathVariable("measurement") String measurement){
         upDataImp.SetMeasureMent(measurement);
         List<InfluxMod> datas = upDataImp.findAll();
@@ -150,20 +160,40 @@ public class devController {
         //return cmdToDevices.RestTemplateTestPost(ProductName, DeviceName, CommandName, RequestID, Payload.toString());
         return cmdMessage.toString();
     }
+    @GetMapping("/downInfluxData/{measurement}")
+    public ReqResults influxToExcel(@PathVariable("measurement") String measurement) throws IOException {
+        /**
+        * @description: 导出influx指定数据库数据
+ * @param measurement 要导出的数据库名
+        * @return: com.zhiiothub.v1.utils.common.ReqResults
+        * @author: zhanghc
+        * @time: 2023/2/11 8:13
+        */
+        upDataImp.SetMeasureMent(measurement);
+        List<InfluxMod> datas = upDataImp.findAll();
+        Workbook workbook = ExcelExportUtil.exportExcel(new ExportParams("测试", "测试"), InfluxMod.class, datas);
+        FileOutputStream outputStream = new FileOutputStream("D:\\test1.xls");
+        workbook.write(outputStream);
+        outputStream.close();
+        workbook.close();
+        return ReqResults.success();
+    }
 
     @PostMapping("/uploadImg")
     @ResponseBody
     public ReqResults uploadImag(@RequestParam("img") MultipartFile req, ImgParams imgModel){
         /**
         * @description: 接收对象（上传图片及环境参数）
-        * @return: void
+        * @return: {
+         *     "code": "200",
+         *     "msg": "",
+         *     "data": null
+         * }
         * @author: zhanghc
         * @time: 2023/2/9 20:03
         */
         //String fileName = req.getFile().getOriginalFilename();
         String fileName = req.getOriginalFilename();
-
-
         System.out.println("完整文件名 = " + fileName);
         System.out.println("username = " + imgModel.getUsername());
         InputStream inputStream = null;
