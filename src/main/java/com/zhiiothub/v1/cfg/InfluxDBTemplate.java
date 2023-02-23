@@ -34,9 +34,11 @@ public class InfluxDBTemplate {
      * */
     public void getInfluxDB(){
         if(influxDB == null){
-            influxDB = InfluxDBFactory.connect(influxdbProperties.getUrl(),
-                    influxdbProperties.getUsername(),
-                    influxdbProperties.getPassword());
+//            influxDB = InfluxDBFactory.connect(influxdbProperties.getUrl(),
+//                    influxdbProperties.getUsername(),
+//                    influxdbProperties.getPassword());
+            //docker内网使用，不需要用户密码
+            influxDB = InfluxDBFactory.connect(influxdbProperties.getUrl());
             if(influxDB.databaseExists(influxdbProperties.getDatabase()))
             {
                 influxDB.setDatabase(influxdbProperties.getDatabase());

@@ -74,4 +74,21 @@ public class MongoTemplateTest extends V1ApplicationTests{
         outputStream.close();
         workbook.close();
     }
+    @Test
+    public void publisherMsg() {
+        rabbitTemplate.convertAndSend("hello","hello world");
+        rabbitTemplate.convertAndSend("heihei","ha ha");
+        // 生产端没有指定交换机只有routingKey和Object。
+        ////消费方产生hello队列，放在默认的交换机(AMQP default)上。
+        ////而默认的交换机有一个特点，只要你的routerKey的名字与这个
+        ////交换机的队列有相同的名字，他就会自动路由上。
+        ////生产端routingKey 叫hello ，消费端生产hello队列。
+        ////他们就路由上了
+    }
+    @Test
+    public void testRedis(){
+        stringRedisTemplate.opsForSet().add("set","ID");
+        System.out.println(stringRedisTemplate.opsForSet().isMember("set", "12"));
+    }
+
 }

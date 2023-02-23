@@ -1,7 +1,10 @@
 spring:
   data:
     mongodb:
-      uri: mongodb://zzz:zzz@101.43.193.226:27017/iothub?authSource=admin
+#      uri: mongodb://zzz:zzz@101.43.193.226:27017/iothub?authSource=admin
+#      uri: mongodb://mongodb:27017/iothub
+      uri: mongodb://iothub:iothub@101.43.193.226:27017/iothub?authSource=admin
+
 
   datasource:
     username: user1
@@ -10,13 +13,27 @@ spring:
 
   influx:
     url: http://101.43.193.226:8086
+#    url: http://influxdb:8086
     database: iothub
-    username: iot
-    password: iot
+#    username: iot
+#    password: iot
   mvc:
     pathmatch:
       matching-strategy: ant_path_matcher
 
+  application:
+    name: springboot_rabbitmq
+  rabbitmq:
+    host: 101.43.193.226
+    port: 5672
+    username: iothub
+    password: iothub
+    virtual-host: /iothub
+
+  redis:
+    host: 101.43.193.226
+    port: 6379
+    database: 0
 # post EMQX头部认证
 apiAuth:
   api_key: "72db4db16f546485"

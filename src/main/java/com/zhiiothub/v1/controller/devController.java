@@ -2,7 +2,9 @@ package com.zhiiothub.v1.controller;
 
 import cn.afterturn.easypoi.excel.ExcelExportUtil;
 import cn.afterturn.easypoi.excel.entity.ExportParams;
+import com.alibaba.fastjson.JSONObject;
 import com.zhiiothub.v1.dao.imp.DeviceDaoImp;
+import com.zhiiothub.v1.dao.imp.TslDaoImp;
 import com.zhiiothub.v1.dao.imp.UpDataImp;
 import com.zhiiothub.v1.model.*;
 import com.zhiiothub.v1.utils.CmdToDevices;
@@ -10,8 +12,11 @@ import com.zhiiothub.v1.utils.ShortUuid;
 import com.zhiiothub.v1.utils.common.ReqResults;
 import org.apache.poi.ss.usermodel.Workbook;
 import org.apache.tomcat.util.http.fileupload.IOUtils;
+import org.springframework.amqp.rabbit.core.RabbitTemplate;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.data.redis.core.RedisTemplate;
+import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
@@ -35,6 +40,8 @@ import java.util.regex.Pattern;
 public class devController {
     @Autowired
     DeviceDaoImp deviceDaoImp;
+    @Autowired
+    TslDaoImp tslDaoImp;
     //读取MongoDB设备注册信息表
     @Autowired
     CmdToDevices cmdToDevices;
@@ -42,6 +49,12 @@ public class devController {
     UpDataImp upDataImp;
     @Value("${imgFile.file_path}")
     private String file_path;
+    @Autowired
+    private RabbitTemplate rabbitTemplate;
+    @Autowired
+    private StringRedisTemplate stringRedisTemplate;  //对字符串支持比较友好,不能存储对象
+    @Autowired
+    private RedisTemplate redisTemplate;  //存储对象
 
     @GetMapping("/devsDetail/{device_name}")
     public List<DeviceMongoDB> getDeviceDetail(@PathVariable("device_name") String device_name){
@@ -80,15 +93,48 @@ public class devController {
         influxMod.getFields().put("lux", upMessage.getData().get("lux").toString());
         influxMod.getFields().put("temp", upMessage.getData().get("temp").toString());
         influxMod.getFields().put("hum", upMessage.getData().get("hum").toString());
-        String topic = upMessage.getTopic().toString();
-        Pattern pattern = Pattern.compile("upload_data\\/.{8}\\/(.*?)\\/.*");
-        Matcher matcher = pattern.matcher(topic);
-        if(matcher.matches()){
-            System.out.println("group1=" + matcher.group(1));
+        /* 解析clientId，redis查找ClientID完成消息去重 */
+        if(!stringRedisTemplate.opsForSet().isMember("set", upMessage.getData().get("clientID").toString())){
+            stringRedisTemplate.opsForSet().add("set",upMessage.getData().get("clientID").toString());
+            String topic = upMessage.getTopic().toString();
+            Pattern pattern = Pattern.compile("upload_data\\/.{8}\\/(.*?)\\/.*");
+            Matcher matcher = pattern.matcher(topic);
+            if(matcher.matches()){
+                System.out.println("group1=" + matcher.group(1));
+            }
+            upDataImp.SetMeasureMent(matcher.group(1));
+            upDataImp.save(influxMod);
         }
-        upDataImp.SetMeasureMent(matcher.group(1));
-        upDataImp.save(influxMod);
         return client;
+    }
+    @PostMapping("/upstatus/{DeviceName}")
+    public ReqResults uploadStatus(@RequestBody UpMessage upMessage, @PathVariable String DeviceName){
+        /**
+        * @description: 处理设备上传状态，并放入响应消息队列
+ * @param upMessage
+ * @param clientId
+        * @return: java.lang.String
+        * @author: zhanghc
+        * @time: 2023/2/22 15:40
+        */
+        //解析状态数据
+        String deviceName = DeviceName;
+        System.out.println(deviceName);
+        //去mongodb获取物模型
+        List<TslMongoDB> tslMongoDBList = tslDaoImp.findByDeviceName(deviceName);
+        System.out.println(tslMongoDBList.get(0).getDevice_tsl());
+        JSONObject jsonObject = JSONObject.parseObject(tslMongoDBList.get(0).getDevice_tsl());
+        JSONObject props =  jsonObject.getJSONObject("data");
+        InfluxMod influxMod = new InfluxMod();
+        for (Map.Entry entry : props.entrySet()) {
+            influxMod.getFields().put(entry.getKey().toString(), upMessage.getData().get(entry.getKey().toString()).toString());
+            System.out.println(entry.getKey().toString());
+        }
+        System.out.println(influxMod.toString());
+        System.out.println("收到数据！！！！");
+        //对象序列化
+        rabbitTemplate.convertAndSend("directs",deviceName,influxMod.toString());
+        return ReqResults.success();
     }
     @GetMapping("/influxData/{measurement}")
     /**
@@ -194,7 +240,7 @@ public class devController {
         //String fileName = req.getFile().getOriginalFilename();
         String fileName = req.getOriginalFilename();
         System.out.println("完整文件名 = " + fileName);
-        System.out.println("username = " + imgModel.getUsername());
+        System.out.println("filename = " + imgModel.getFilename());
         InputStream inputStream = null;
         FileOutputStream fileOut = null;
         try {
@@ -231,5 +277,25 @@ public class devController {
         System.out.println(Payload);
         String RequestID = ShortUuid.generateShortUuid();
         return cmdToDevices.RestTemplateTestPost(ProductName, DeviceName, CommandName, RequestID, Payload);
+    }
+    /**
+    * @description: 向mongodb中存储物模型，位置-tsl
+     * @param jsonStr 前端提交的物模型字段
+    * @return:
+    * @author: zhanghc
+    * @time: 2023/2/22 22:35
+    */
+    @PostMapping("/uptsl/{DeviceName}")
+    public String  upTsl(@RequestBody String jsonStr, @PathVariable("DeviceName") String DeviceName){
+        TslMongoDB tslMongoDB = new TslMongoDB(DeviceName, jsonStr);
+        tslDaoImp.updateTslByDeviceName(tslMongoDB);
+//        tslDaoImp.addOnedoc(tslMongoDB);
+//        JSONObject jsonObject = JSONObject.parseObject(jsonStr);
+//        JSONObject props =  jsonObject.getJSONObject("props");
+//        for (Map.Entry entry : props.entrySet()) {
+//            System.out.println(entry.getKey().toString());
+//        }
+        System.out.println(tslDaoImp.findByDeviceName(DeviceName).toString());
+        return null;
     }
 }

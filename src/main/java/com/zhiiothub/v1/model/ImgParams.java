@@ -10,19 +10,13 @@ import org.springframework.web.multipart.MultipartFile;
  */
 
 public class ImgParams {
-    private String username;
-    private String age;
-    public String getAge() {
-        return age;
-    }
-    public void setAge(String age) {
-        this.age = age;
-    }
-    public String getUsername() {
-        return username;
-    }
-    public void setUsername(String username) {
-        this.username = username;
+    private String filename;
+
+    public String getFilename() {
+        return filename;
     }
 
+    public void setFilename(String filename) {
+        this.filename = filename;
+    }
 }
