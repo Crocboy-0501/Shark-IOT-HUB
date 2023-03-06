@@ -2,9 +2,12 @@ package com.zhiiothub.v1;
 
 import cn.afterturn.easypoi.excel.ExcelExportUtil;
 import cn.afterturn.easypoi.excel.entity.ExportParams;
+import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.zhiiothub.v1.cfg.InfluxDBTemplate;
 import com.zhiiothub.v1.dao.imp.UpDataImp;
+import com.zhiiothub.v1.model.Dev;
 import com.zhiiothub.v1.model.InfluxMod;
+import com.zhiiothub.v1.model.User;
 import org.apache.poi.ss.usermodel.Workbook;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -90,5 +93,11 @@ public class MongoTemplateTest extends V1ApplicationTests{
         stringRedisTemplate.opsForSet().add("set","ID");
         System.out.println(stringRedisTemplate.opsForSet().isMember("set", "12"));
     }
-
+    @Test
+    public void findAllTest(){
+        QueryWrapper<Dev> queryWrapper = new QueryWrapper<>();
+        queryWrapper.eq("userid",1);//设置等值查询
+        List<Dev> devs = devDao.selectList(queryWrapper);
+        devs.forEach(user-> System.out.println("dev = " + user));
+    }
 }

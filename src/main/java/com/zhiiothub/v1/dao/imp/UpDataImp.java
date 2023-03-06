@@ -3,7 +3,6 @@ package com.zhiiothub.v1.dao.imp;
 import com.zhiiothub.v1.cfg.InfluxDBTemplate;
 import com.zhiiothub.v1.dao.UpDataDao;
 import com.zhiiothub.v1.model.InfluxMod;
-import com.zhiiothub.v1.model.UpMessageToInflux;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 

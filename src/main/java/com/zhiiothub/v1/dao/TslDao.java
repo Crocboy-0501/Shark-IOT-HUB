@@ -12,4 +12,5 @@ public interface TslDao {
     List<TslMongoDB> findAll();
     List<TslMongoDB> findByDeviceName(String DeviceName);
     String updateTslByDeviceName(TslMongoDB tslMongoDB);
+    TslMongoDB findOneByDeviceName(String DeviceName);
 }

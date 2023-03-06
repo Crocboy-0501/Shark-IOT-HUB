@@ -4,14 +4,15 @@ import java.util.HashMap;
 import java.util.Map;
 
 public class UpMessage {
-    private Map<String, String> data = new HashMap<>();
+    //influxmod field类型必须是<String , String>
+    private Map<String, Object> data = new HashMap<>();
     private String topic;
 
-    public Map<String, String> getData() {
+    public Map<String, Object> getData() {
         return data;
     }
 
-    public void setData(Map<String, String> data) {
+    public void setData(Map<String, Object> data) {
         this.data = data;
     }
 

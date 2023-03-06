@@ -1,5 +1,7 @@
 package com.zhiiothub.v1;
 
+import com.zhiiothub.v1.dao.DevDao;
+import com.zhiiothub.v1.dao.UserDao;
 import org.junit.jupiter.api.Test;
 import org.springframework.amqp.rabbit.core.RabbitTemplate;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -11,6 +13,10 @@ import org.springframework.web.client.RestTemplate;
 class V1ApplicationTests {
     @Autowired
     protected RestTemplate restTemplate;
+    @Autowired
+    protected UserDao userDao;
+    @Autowired
+    protected DevDao devDao;
     @Autowired
     protected RabbitTemplate rabbitTemplate;
     @Autowired

@@ -55,4 +55,11 @@ public class TslDaoImp implements TslDao {
         }
         return "TSL Update Successfully!";
     }
+
+    @Override
+    public TslMongoDB findOneByDeviceName(String DeviceName) {
+        Query query = Query.query(Criteria.where("device_name").is(DeviceName));
+        TslMongoDB tslMongoDB = mongoTemplate.findOne(query, TslMongoDB.class);
+        return tslMongoDB;
+    }
 }

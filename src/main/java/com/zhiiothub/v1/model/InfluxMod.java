@@ -23,12 +23,12 @@ public class InfluxMod implements Serializable {
     private Map<String, String> tags = new HashMap<>();
     @Excel(name="fields")
     private Map<String, Object> fields = new HashMap<>();
-    @ExcelEntity
-    private InfluxEnvMod influxEnvMod;
+//    @ExcelEntity
+//    private InfluxEnvMod influxEnvMod;
 
-    public void setInfluxEnvMod(InfluxEnvMod influxEnvMod) {
-        this.influxEnvMod = influxEnvMod;
-    }
+//    public void setInfluxEnvMod(InfluxEnvMod influxEnvMod) {
+//        this.influxEnvMod = influxEnvMod;
+//    }
 /**
  * Q: this.influxEnvMod无效
 */
@@ -41,14 +41,14 @@ public class InfluxMod implements Serializable {
 //        return influxEnvMod;
 //    }
 
-    public InfluxEnvMod getInfluxEnvMod() {
-        InfluxEnvMod influxEnvMod = new InfluxEnvMod();
-        influxEnvMod.setHum(fields.get("hum").toString());
-        influxEnvMod.setTemp(fields.get("temp").toString());
-        influxEnvMod.setLux(fields.get("lux").toString());
-        influxEnvMod.setVoltage(fields.get("voltage").toString());
-        return influxEnvMod;
-    }
+//    public InfluxEnvMod getInfluxEnvMod() {
+//        InfluxEnvMod influxEnvMod = new InfluxEnvMod();
+//        influxEnvMod.setHum(fields.get("hum").toString());
+//        influxEnvMod.setTemp(fields.get("temp").toString());
+//        influxEnvMod.setLux(fields.get("lux").toString());
+//        influxEnvMod.setVoltage(fields.get("voltage").toString());
+//        return influxEnvMod;
+//    }
 //    @Excel(name="湿度")
 //    private String hum;
 
@@ -93,10 +93,9 @@ public class InfluxMod implements Serializable {
 
     @Override
     public String toString(){
-        return "Status{" +
-                "time=" + time +
-                ", tags=" + tags +
-                ", fields=" + fields +
+        return "{" +
+                "time" + ":" + time + "," +
+                "fields" + ":" + fields +
                 "}";
     }
 }

@@ -36,8 +36,9 @@ public class CmdMessage {
         this.commandName = commandName;
     }
 
-    public Map<String, String> getPayLoad() {
-        return payLoad;
+    public String getPayLoad(){
+        this.payLoad.forEach((key, value) -> System.out.println(key + "\t" + value));
+        return "{" + "}";
     }
 
     public void setPayLoad(Map<String, String> payLoad) {

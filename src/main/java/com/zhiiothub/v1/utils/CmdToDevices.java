@@ -28,7 +28,7 @@ public class CmdToDevices {
      * */
     public String RestTemplateTestPost(String ProductName, String DeviceName, String CommandName,
                                     String RequestID, String Payload){
-        String url = "http://127.0.0.1:18083/api/v5/publish";
+        String url = "http://101.43.193.226:18083/api/v5/publish";
         HttpHeaders headers = new HttpHeaders();
         headers.setContentType(MediaType.APPLICATION_JSON);
         CmdMessageToEmq cmdMessageToEmq = new CmdMessageToEmq();
