@@ -8,6 +8,7 @@ import com.zhiiothub.v1.dao.imp.UpDataImp;
 import com.zhiiothub.v1.model.Dev;
 import com.zhiiothub.v1.model.InfluxMod;
 import com.zhiiothub.v1.model.User;
+import com.zhiiothub.v1.utils.TopicGen;
 import org.apache.poi.ss.usermodel.Workbook;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -25,7 +26,8 @@ public class MongoTemplateTest extends V1ApplicationTests{
     @Value("${apiAuth.api_secret}")
     private String api_secret;
 
-
+    @Autowired
+    private TopicGen topicGen;
     @Autowired
     private UpDataImp upDataImp;
 
@@ -33,8 +35,7 @@ public class MongoTemplateTest extends V1ApplicationTests{
     private InfluxDBTemplate influxDBTemplate;
     @Test
     public void test1(){
-        System.out.println(api_key);
-        System.out.println(api_secret);
+        topicGen.GetTopics("test", "test");
     }
 
 

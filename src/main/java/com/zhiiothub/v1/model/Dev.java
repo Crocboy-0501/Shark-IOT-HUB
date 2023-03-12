@@ -1,5 +1,6 @@
 package com.zhiiothub.v1.model;
 
+import com.baomidou.mybatisplus.annotation.FieldStrategy;
 import com.baomidou.mybatisplus.annotation.TableField;
 import com.baomidou.mybatisplus.annotation.TableName;
 import lombok.AllArgsConstructor;
@@ -7,6 +8,8 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 import lombok.ToString;
 import lombok.experimental.Accessors;
+
+import java.sql.Timestamp;
 
 /**
  * @description:
@@ -21,15 +24,18 @@ import lombok.experimental.Accessors;
 @TableName("devs")
 public class Dev{
     private int id;
+    private String device_name;
     private String protocol;
-    private String devname;
     private String status;
     private String secret;
-    private String productstyle;
-    private int userid;
-    private String devregtime;
+    @TableField(updateStrategy = FieldStrategy.IGNORED)
+    private String product_name;
+    private String user_id;
+    private String dev_regtime;
     private String latitude;
     private String longitude;
+    private String client_id;
+    private String sn;
     @TableField(exist = false)//不映射数据库表中的任何字段
     private String tsl;
 }

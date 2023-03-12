@@ -1,8 +1,7 @@
 package com.zhiiothub.v1.dao.imp;
 
 import com.zhiiothub.v1.dao.TslDao;
-import com.zhiiothub.v1.model.DeviceMongoDB;
-import com.zhiiothub.v1.model.TslMongoDB;
+import com.zhiiothub.v1.model.DevTslAcl;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.mongodb.core.MongoTemplate;
 import org.springframework.data.mongodb.core.query.Criteria;
@@ -24,42 +23,42 @@ public class TslDaoImp implements TslDao {
 
     @Override
     public void deleteOnedoc(String device_name) {
-        mongoTemplate.remove(Query.query(Criteria.where("device_name").is(device_name)), TslMongoDB.class);
+        mongoTemplate.remove(Query.query(Criteria.where("device_name").is(device_name)), DevTslAcl.class);
     }
 
     @Override
-    public void addOnedoc(TslMongoDB tslMongoDB) {
-        mongoTemplate.save(tslMongoDB);
+    public void addOnedoc(DevTslAcl devTslAcl) {
+        mongoTemplate.save(devTslAcl);
     }
 
     @Override
-    public List<TslMongoDB> findAll() {
-        return mongoTemplate.findAll(TslMongoDB.class);
+    public List<DevTslAcl> findAll() {
+        return mongoTemplate.findAll(DevTslAcl.class);
     }
 
     @Override
-    public List<TslMongoDB> findByDeviceName(String DeviceName) {
-        return mongoTemplate.find(Query.query(Criteria.where("device_name").is(DeviceName)), TslMongoDB.class);
+    public List<DevTslAcl> findByDeviceName(String DeviceName) {
+        return mongoTemplate.find(Query.query(Criteria.where("device_name").is(DeviceName)), DevTslAcl.class);
     }
 
     @Override
-    public String updateTslByDeviceName(TslMongoDB tslMongoDB) {
-        Query query = Query.query(Criteria.where("device_name").is(tslMongoDB.getDevice_name()));
-        if((mongoTemplate.count(query, TslMongoDB.class)) != 0){
+    public String updateTslByDeviceName(DevTslAcl devTslAcl) {
+        Query query = Query.query(Criteria.where("device_name").is(devTslAcl.getDevice_name()));
+        if((mongoTemplate.count(query, DevTslAcl.class)) != 0){
             Update update = new Update();
-            update.set("device_tsl", tslMongoDB.getDevice_tsl());
-            mongoTemplate.updateFirst(query, update, TslMongoDB.class);
+            update.set("device_tsl", devTslAcl.getDevice_tsl());
+            mongoTemplate.updateFirst(query, update, DevTslAcl.class);
         }else{
-            addOnedoc(tslMongoDB);
+            addOnedoc(devTslAcl);
             System.out.println("添加成功");
         }
         return "TSL Update Successfully!";
     }
 
     @Override
-    public TslMongoDB findOneByDeviceName(String DeviceName) {
+    public DevTslAcl findOneByDeviceName(String DeviceName) {
         Query query = Query.query(Criteria.where("device_name").is(DeviceName));
-        TslMongoDB tslMongoDB = mongoTemplate.findOne(query, TslMongoDB.class);
-        return tslMongoDB;
+        DevTslAcl devTslAcl = mongoTemplate.findOne(query, DevTslAcl.class);
+        return devTslAcl;
     }
 }

@@ -6,15 +6,14 @@ import com.alibaba.fastjson.JSON;
 import com.alibaba.fastjson.JSONObject;
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.zhiiothub.v1.dao.DevDao;
-import com.zhiiothub.v1.dao.imp.DeviceDaoImp;
 import com.zhiiothub.v1.dao.imp.TslDaoImp;
 import com.zhiiothub.v1.dao.imp.UpDataImp;
 import com.zhiiothub.v1.model.*;
 import com.zhiiothub.v1.utils.CmdToDevices;
 import com.zhiiothub.v1.utils.Logs;
 import com.zhiiothub.v1.utils.ShortUuid;
+import com.zhiiothub.v1.utils.TopicGen;
 import com.zhiiothub.v1.utils.common.ReqResults;
-import org.apache.ibatis.logging.stdout.StdOutImpl;
 import org.apache.poi.ss.usermodel.Workbook;
 import org.apache.tomcat.util.http.fileupload.IOUtils;
 import org.springframework.amqp.rabbit.core.RabbitTemplate;
@@ -43,15 +42,14 @@ import java.util.regex.Pattern;
 @CrossOrigin
 @RequestMapping("/api")
 public class DevController {
+
     @Autowired
-    DeviceDaoImp deviceDaoImp;
-    @Autowired
-    TslDaoImp tslDaoImp;
+    private TslDaoImp tslDaoImp;
     //读取MongoDB设备注册信息表
     @Autowired
-    CmdToDevices cmdToDevices;
+    private CmdToDevices cmdToDevices;
     @Autowired
-    UpDataImp upDataImp;
+    private UpDataImp upDataImp;
     @Value("${imgFile.file_path}")
     private String file_path;
     @Autowired
@@ -64,17 +62,20 @@ public class DevController {
     protected DevDao devDao;
     @Autowired
     Logs logs;
+
+    @Autowired
+    private TopicGen topicGen;
     /**
     * @description: 根据设备id号查询设备详情信息
     * @return: dev json字符串
     * @author: zhanghc
     * @time: 2023/3/6 21:37
     */
-    @GetMapping("/dev_details/{device_id}")
+    @GetMapping("/dev_dtl/{device_id}")
     public Dev getDeviceDetail(@PathVariable("device_id") String id) throws Exception{
         Dev dev = devDao.selectById(id);
-        System.out.println(dev.getDevname());
-        dev.setTsl(tslDaoImp.findOneByDeviceName(dev.getDevname()).getDevice_tsl());
+        System.out.println(dev.getDevice_name());
+        dev.setTsl(tslDaoImp.findOneByDeviceName(dev.getDevice_name()).getDevice_tsl());
         return dev;
     }
     //根据设备名称删除设备
@@ -85,10 +86,10 @@ public class DevController {
     }
 
     //根据userid查询设备数
-    @GetMapping("/dev/{userid}")
-    public List<Dev> getAllDevices(@PathVariable String userid){
+    @GetMapping("/dev/{user_id}")
+    public List<Dev> getAllDevices(@PathVariable String user_id){
         QueryWrapper<Dev> queryWrapper = new QueryWrapper<>();
-        queryWrapper.eq("userid", userid);
+        queryWrapper.eq("user_id", user_id);
         List<Dev> devs = devDao.selectList(queryWrapper);
         devs.forEach(dev -> System.out.println("dev = " + dev));
         return devs;
@@ -112,15 +113,16 @@ public class DevController {
         String deviceName = DeviceName;
         System.out.println("deviceName = " + deviceName);
         //去mongodb获取物模型
-        List<TslMongoDB> tslMongoDBList = tslDaoImp.findByDeviceName(deviceName);
-        System.out.println(tslMongoDBList.get(0).getDevice_tsl());
-        JSONObject jsonObject = JSONObject.parseObject(tslMongoDBList.get(0).getDevice_tsl());
-        System.out.println("解析data");
-        JSONObject props =  jsonObject.getJSONObject("data");
-        System.out.println("解析data失败");
+//        List<DevTslAcl> devTslAclList = tslDaoImp.findByDeviceName(deviceName);
+//        System.out.println(devTslAclList.get(0).getDevice_tsl());
+//        JSONObject jsonObject = JSONObject.parseObject(devTslAclList.get(0).getDevice_tsl());
+//        System.out.println("解析data");
+//        JSONObject props =  jsonObject.getJSONObject("data");
+//        System.out.println("解析data失败");
+//        JSONObject jsonObject = JSONObject.parseObject(upMessage.getData().toString());
         InfluxMod influxMod = new InfluxMod();
-        for (Map.Entry entry : props.entrySet()) {
-            influxMod.getFields().put(entry.getKey().toString(), upMessage.getData().get(entry.getKey().toString()).toString());
+        for (Map.Entry entry : upMessage.getData().entrySet()) {
+            influxMod.getFields().put(entry.getKey().toString(), entry.getValue().toString());
             System.out.println(entry.getKey().toString());
         }
         //influxmod field类型必须是<String , String>
@@ -128,12 +130,13 @@ public class DevController {
         System.out.println(influxMod.toString());
         System.out.println("收到数据！！！！");
         //对象序列化
+        //使用rabbitMQ路由模型 exchange为directs模式 routerkey为deviceName
         rabbitTemplate.convertAndSend("directs",deviceName, JSON.toJSONString(influxMod.getFields()));
 
         /* 解析messageId，redis查找messageId完成消息去重 */
-        if(!stringRedisTemplate.opsForSet().isMember("set", upMessage.getData().get("messageId").toString())){
-            stringRedisTemplate.opsForSet().add("set",upMessage.getData().get("messageId").toString());
-            String topic = upMessage.getTopic().toString();
+        if(!stringRedisTemplate.opsForSet().isMember("messageID", upMessage.getData().get("messageId").toString())){
+            stringRedisTemplate.opsForSet().add("messageID",upMessage.getData().get("messageId").toString());
+            String topic = upMessage.getTopic();
             Pattern pattern = Pattern.compile("upload_data\\/.{8}\\/(.*?)\\/.*");
             Matcher matcher = pattern.matcher(topic);
             if(matcher.matches()){
@@ -159,9 +162,9 @@ public class DevController {
         String deviceName = DeviceName;
         System.out.println(deviceName);
         //去mongodb获取物模型
-        List<TslMongoDB> tslMongoDBList = tslDaoImp.findByDeviceName(deviceName);
-        System.out.println(tslMongoDBList.get(0).getDevice_tsl());
-        JSONObject jsonObject = JSONObject.parseObject(tslMongoDBList.get(0).getDevice_tsl());
+        List<DevTslAcl> devTslAclList = tslDaoImp.findByDeviceName(deviceName);
+        System.out.println(devTslAclList.get(0).getDevice_tsl());
+        JSONObject jsonObject = JSONObject.parseObject(devTslAclList.get(0).getDevice_tsl());
         JSONObject props =  jsonObject.getJSONObject("data");
         InfluxMod influxMod = new InfluxMod();
         for (Map.Entry entry : props.entrySet()) {
@@ -174,7 +177,7 @@ public class DevController {
         rabbitTemplate.convertAndSend("directs",deviceName,JSONObject.parseObject(influxMod.toString()));
         return ReqResults.success();
     }
-    @GetMapping("/get_influxdb/{measurement}")
+    @GetMapping("/get_dinf/{measurement}")
     /**
     * @description: 查找{measurement}库的数据
     * @return: java.util.List<com.zhiiothub.v1.model.InfluxMod>
@@ -182,6 +185,22 @@ public class DevController {
     * @time: 2023/2/10 21:10
     */ 
     public List<InfluxMod> QueryInfluxDB(@PathVariable("measurement") String measurement){
+        System.out.println(measurement);
+        upDataImp.SetMeasureMent(measurement);
+        List<InfluxMod> datas = upDataImp.findAll();
+        System.out.println(datas.get(0));
+        return datas;
+    }
+
+
+    @GetMapping("/get_dlogs/{measurement}")
+    /**
+     * @description: 查找{measurement}日志库的数据
+     * @return: java.util.List<com.zhiiothub.v1.model.InfluxMod>
+     * @author: zhanghc
+     * @time: 2023/2/10 21:10
+     */
+    public List<InfluxMod> QueryInfluxDBLogs(@PathVariable("measurement") String measurement){
         System.out.println(measurement);
         upDataImp.SetMeasureMent(measurement);
         List<InfluxMod> datas = upDataImp.findAll();
@@ -204,28 +223,47 @@ public class DevController {
     //更新时序数据库设备连接信息
     @PostMapping("/up_status")
     public String uploadStatus(@RequestBody DevBridgeInfo devBridgeInfo){
-        System.out.println(devBridgeInfo.getUsername());
+        System.out.println("拿到了桥接数据" + devBridgeInfo.getUsername());
+        Dev dev = new Dev();
+        dev.setStatus(devBridgeInfo.getEvent());
+        QueryWrapper<Dev> updateWrapper = new QueryWrapper<>();
+        //修改设备数据状态
+        updateWrapper.eq("device_name", devBridgeInfo.getUsername());
+        devDao.update(dev, updateWrapper);
         logs.devLogs(devBridgeInfo.getUsername(), devBridgeInfo.getEvent(), "INFO");
         return "ok";
     }
-    //设备注册接口，并存储设备信息到MongoDB
+    //设备注册接口，并存储设备信息到Mysql devs表，物模型存储到Mongodb
     @PostMapping("/apply")
     public Dev applyDev(@RequestBody Dev dev){
+
         //设置日期格式
         SimpleDateFormat df = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
         //获取当前时间戳
         String date = df.format(new Date());
         System.out.println(date);
+        String productName = dev.getProduct_name();
+        String sn = dev.getSn();
         String deviceName = ShortUuid.generateShortUuid();
         String secret = ShortUuid.generateShortUuid();
-        //String brokerUsername = productName + deviceName;
-        dev.setDevname(deviceName);
+        //String username = product_name + device_name;
+        //String client_id = product_name + device_name + sn;
+        dev.setClient_id(productName+"/"+deviceName + "/" + sn);
+        dev.setDevice_name(deviceName);
         dev.setSecret(secret);
-//        deviceMongoDB.setBroker_username(brokerUsername);
-        dev.setDevregtime(date);
+        dev.setDev_regtime(date);
         System.out.println(dev.getTsl());
-        TslMongoDB tslMongoDB = new TslMongoDB(dev.getDevname(), dev.getTsl());
-        tslDaoImp.updateTslByDeviceName(tslMongoDB);
+        //配置设备Acl信息
+        //action permission topics
+        DevTslAcl devTslAcl = new DevTslAcl();
+        devTslAcl.setDevice_tsl(dev.getTsl());
+        devTslAcl.setDevice_name(dev.getDevice_name());
+        devTslAcl.setTopics(topicGen.GetTopics(productName, deviceName));
+        devTslAcl.setAction("all");
+        devTslAcl.setPermission("allow");
+
+
+        tslDaoImp.updateTslByDeviceName(devTslAcl);
         devDao.insert(dev);
         return dev;
     }
@@ -246,7 +284,7 @@ public class DevController {
         return cmdToDevices.RestTemplateTestPost(ProductName, DeviceName, CommandName, RequestID, Payload);
 //        return cmdMessage.toString();
     }
-    @GetMapping("/down_influxdb/{measurement}")
+    @GetMapping("/down_inf/{measurement}")
     public ReqResults influxToExcel(@PathVariable("measurement") String measurement) throws IOException {
         /**
         * @description: 导出influx指定数据库数据
@@ -267,7 +305,7 @@ public class DevController {
 
     @PostMapping("/upload_img")
     @ResponseBody
-    public ReqResults uploadImag(@RequestParam("img") MultipartFile req, ImgParams imgModel){
+            public ReqResults uploadImag(@RequestParam("img") MultipartFile req, ImgParams imgModel){
         /**
         * @description: 接收对象（上传图片及环境参数）
         * @return: {
@@ -315,8 +353,8 @@ public class DevController {
     */
     @PostMapping("/update_tsl/{DeviceName}")
     public String  upTsl(@RequestBody String jsonStr, @PathVariable("DeviceName") String DeviceName){
-        TslMongoDB tslMongoDB = new TslMongoDB(DeviceName, jsonStr);
-        tslDaoImp.updateTslByDeviceName(tslMongoDB);
+        DevTslAcl devTslAcl = new DevTslAcl(DeviceName, jsonStr);
+        tslDaoImp.updateTslByDeviceName(devTslAcl);
 //        tslDaoImp.addOnedoc(tslMongoDB);
 //        JSONObject jsonObject = JSONObject.parseObject(jsonStr);
 //        JSONObject props =  jsonObject.getJSONObject("props");
