@@ -35,6 +35,7 @@ public class CmdToDevices {
         cmdMessageToEmq.setTopic("cmd/" + ProductName + "/" + DeviceName + "/"
                                 + CommandName + "/" + RequestID);
         cmdMessageToEmq.setPayload(Payload);
+        cmdMessageToEmq.setMessageID(RequestID);
 
         HttpEntity<CmdMessageToEmq> entityParam = new HttpEntity<CmdMessageToEmq>(cmdMessageToEmq, headers);
         String result = restTemplate.postForObject(url, entityParam, String.class);

@@ -18,9 +18,8 @@ import org.springframework.stereotype.Component;
 //交换机的队列有相同的名字，他就会自动路由上。
 //生产端routingKey 叫hello ，消费端生产hello队列。
 //他们就路由上了
-@RabbitListener(queuesToDeclare = @Queue(value = "heihei"))
+@RabbitListener(queuesToDeclare = @Queue(value = "command"))
 public class HelloCustomer {
-
     @RabbitHandler
     public void receive1(String message){
         System.out.println("message = " + message);

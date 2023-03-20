@@ -1,26 +1,23 @@
 package com.zhiiothub.v1.model;
 
+import com.baomidou.mybatisplus.annotation.TableName;
+import lombok.AllArgsConstructor;
+import lombok.Data;
+import lombok.NoArgsConstructor;
+import lombok.ToString;
+import lombok.experimental.Accessors;
+
 import java.util.HashMap;
 import java.util.Map;
-
+@Data
+@AllArgsConstructor //有参构造
+@NoArgsConstructor //无参构造
+@ToString //toString
 public class UpMessage {
     //influxmod field类型必须是<String , String>
-    private Map<String, Object> data = new HashMap<>();
+    private Map<String, Object> params = new HashMap<>();
     private String topic;
-
-    public Map<String, Object> getData() {
-        return data;
-    }
-
-    public void setData(Map<String, Object> data) {
-        this.data = data;
-    }
-
-    public String getTopic() {
-        return topic;
-    }
-
-    public void setTopic(String topic) {
-        this.topic = topic;
-    }
+    private String messageID;
+    private String version;
+    private String method;
 }

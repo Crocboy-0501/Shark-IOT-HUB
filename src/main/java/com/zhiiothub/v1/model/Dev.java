@@ -27,7 +27,7 @@ public class Dev{
     private String device_name;
     private String protocol;
     private String status;
-    private String secret;
+    private String password_hash;
     @TableField(updateStrategy = FieldStrategy.IGNORED)
     private String product_name;
     private String user_id;

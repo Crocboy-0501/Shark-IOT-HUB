@@ -17,7 +17,7 @@ import java.util.Map;
 @ExcelTarget("influxdb")
 public class InfluxMod implements Serializable {
     @Excel(name="时间")
-    private long time;
+    private Long time;
     @Excel(name="tags")
     private Map<String, String> tags = new HashMap<>();
     @Excel(name="fields")
@@ -66,11 +66,11 @@ public class InfluxMod implements Serializable {
 //        return fields.get("hum").toString();
 //    }
 
-    public long getTime() {
+    public Long getTime() {
         return time;
     }
 
-    public void setTime(long time) {
+    public void setTime(Long time) {
         this.time = time;
     }
 
