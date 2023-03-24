@@ -25,7 +25,6 @@ public class ReqResults {
     public static ReqResults error(String code, String msg){
         return new ReqResults(code, "", null);
     }
-
     public static ReqResults error(){
         return new ReqResults(ReqContants.CODE_500, "系统错误", null);
     }

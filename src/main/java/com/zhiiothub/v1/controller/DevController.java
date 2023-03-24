@@ -176,7 +176,7 @@ public class DevController {
     }
     //更新emqx的post的设备连接信息
     //状态主题:update_status/:productName/:deviceName/:messageId
-    //更新时序数据库设备连接信息
+    //更新设备表devs的连接状态信息
     @PostMapping("/up_status")
     public Map<String, Object> uploadStatus(@RequestBody DevBridgeInfo devBridgeInfo){
         return devService.uploadStatus(devBridgeInfo);
@@ -253,7 +253,7 @@ public class DevController {
 
     @PostMapping("/upload_img")
     @ResponseBody
-            public ReqResults uploadImag(@RequestParam("img") MultipartFile req, ImgParams imgModel){
+    public ReqResults uploadImag(@RequestParam("img") MultipartFile req, ImgParams imgModel){
         /**
         * @description: 接收对象（上传图片及环境参数）
         * @return: {
