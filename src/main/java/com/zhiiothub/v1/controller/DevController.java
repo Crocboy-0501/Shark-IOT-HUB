@@ -2,15 +2,17 @@ package com.zhiiothub.v1.controller;
 
 import cn.afterturn.easypoi.excel.ExcelExportUtil;
 import cn.afterturn.easypoi.excel.entity.ExportParams;
+import cn.hutool.core.io.IoUtil;
+import cn.hutool.poi.excel.ExcelUtil;
+import cn.hutool.poi.excel.ExcelWriter;
 import com.alibaba.fastjson.JSONObject;
-import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.zhiiothub.v1.dao.DevDao;
 import com.zhiiothub.v1.dao.imp.TslDaoImp;
 import com.zhiiothub.v1.dao.imp.UpDataImp;
 import com.zhiiothub.v1.model.*;
 import com.zhiiothub.v1.service.DevService;
 import com.zhiiothub.v1.utils.CmdToDevices;
-import com.zhiiothub.v1.utils.Logs;
+import com.zhiiothub.v1.utils.LogsUtils;
 import com.zhiiothub.v1.utils.ShortUuid;
 import com.zhiiothub.v1.utils.TopicGen;
 import com.zhiiothub.v1.utils.common.ReqResults;
@@ -24,6 +26,8 @@ import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
+import javax.servlet.ServletOutputStream;
+import javax.servlet.http.HttpServletResponse;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
@@ -60,7 +64,7 @@ public class DevController {
     @Autowired
     protected DevDao devDao;
     @Autowired
-    Logs logs;
+    LogsUtils logsUtils;
 
     @Autowired
     private TopicGen topicGen;
@@ -249,6 +253,27 @@ public class DevController {
         outputStream.close();
         workbook.close();
         return ReqResults.success();
+    }
+    @GetMapping("/export/{measurement}")
+    public void export(HttpServletResponse response, @PathVariable("measurement") String measurement) throws Exception{
+        upDataImp.SetMeasureMent(measurement);
+        List<InfluxMod> list = upDataImp.findAll();
+        // 通过工具类创建writer
+        ExcelWriter writer = ExcelUtil.getWriter(true);
+        writer.write(list, true);
+
+        //response为HttpServletResponse对象
+        response.setContentType("application/vnd.ms-excel;charset=utf-8");
+        //test.xls是弹出下载对话框的文件名，不能为中文，中文请自行编码
+        response.setHeader("Content-Disposition","attachment;filename=forestryData.xls");
+        ServletOutputStream out=response.getOutputStream();
+
+        writer.flush(out, true);
+        // 关闭writer，释放内存
+        writer.close();
+        //此处记得关闭输出Servlet流
+        IoUtil.close(out);
+
     }
 
     @PostMapping("/upload_img")
