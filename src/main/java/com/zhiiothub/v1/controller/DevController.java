@@ -3,6 +3,7 @@ package com.zhiiothub.v1.controller;
 import cn.afterturn.easypoi.excel.ExcelExportUtil;
 import cn.afterturn.easypoi.excel.entity.ExportParams;
 import cn.hutool.core.io.IoUtil;
+import cn.hutool.json.JSON;
 import cn.hutool.poi.excel.ExcelUtil;
 import cn.hutool.poi.excel.ExcelWriter;
 import com.alibaba.fastjson.JSONObject;
@@ -11,6 +12,7 @@ import com.zhiiothub.v1.dao.imp.TslDaoImp;
 import com.zhiiothub.v1.dao.imp.UpDataImp;
 import com.zhiiothub.v1.model.*;
 import com.zhiiothub.v1.service.DevService;
+import com.zhiiothub.v1.service.WebSocketServer;
 import com.zhiiothub.v1.utils.CmdToDevices;
 import com.zhiiothub.v1.utils.LogsUtils;
 import com.zhiiothub.v1.utils.ShortUuid;
@@ -43,7 +45,7 @@ import java.util.Map;
  */
 @RestController
 @CrossOrigin
-@RequestMapping("/api")
+@RequestMapping("/dev")
 public class DevController {
 
     @Autowired
@@ -76,8 +78,8 @@ public class DevController {
     * @author: zhanghc
     * @time: 2023/3/6 21:37
     */
-    @GetMapping("/dev_dtl/{device_id}")
-    public Map<String, Object> getDeviceDetail(@PathVariable("device_id") String id) throws Exception{
+    @GetMapping("/devDetail/{deviceId}")
+    public Map<String, Object> getDeviceDetail(@PathVariable("deviceId") String id) throws Exception{
         Map<String,Object> result = new HashMap<>();
         try{
             result = devService.getDeviceDetail(id);
@@ -89,15 +91,15 @@ public class DevController {
         return result;
     }
     //根据设备名称删除设备
-    @DeleteMapping("/dev/{device_id}")
-    public Map<String, Object> deleteDevices(@PathVariable("device_id") String device_id){
+    @DeleteMapping("/{deviceId}")
+    public Map<String, Object> deleteDevices(@PathVariable("deviceId") String device_id){
         return devService.deleteDevices(device_id);
     }
 
     //根据userid查询设备数
-    @GetMapping("/dev/{user_id}")
-    public Map<String, Object> getAllDevices(@PathVariable String user_id){
-        return devService.getAllDevices(user_id);
+    @GetMapping("/{userId}")
+    public Map<String, Object> getAllDevices(@PathVariable String userId){
+        return devService.getAllDevices(userId);
     }
     //emqx上行数据处理
     //正则表达式解析数据主题
@@ -117,7 +119,7 @@ public class DevController {
         //解析状态数据
         return devService.uploadMessage(upMessage, DeviceName);
     }
-    @PostMapping("/upstatus/{deviceName}")
+    @PostMapping("/upStatus/{deviceName}")
     public ReqResults uploadStatus(@RequestBody UpMessage upMessage, @PathVariable String deviceName){
         /**
         * @description: 处理设备上传状态，并放入响应消息队列
@@ -146,7 +148,7 @@ public class DevController {
         rabbitTemplate.convertAndSend("mqtt.status",deviceName,JSONObject.parseObject(upMessage.toString()));
         return ReqResults.success();
     }
-    @GetMapping("/get_dinf/{measurement}")
+    @GetMapping("/getDevInf/{measurement}")
     /**
     * @description: 查找{measurement}库的数据
     * @return: java.util.List<com.zhiiothub.v1.model.InfluxMod>
@@ -158,7 +160,7 @@ public class DevController {
     }
 
 
-    @GetMapping("/get_dlogs/{measurement}")
+    @GetMapping("/getDevLogs/{measurement}")
     /**
      * @description: 查找{measurement}日志库的数据
      * @return: java.util.List<com.zhiiothub.v1.model.InfluxMod>
@@ -174,14 +176,14 @@ public class DevController {
     * @author: zhanghc
     * @time: 2023/3/6 21:22
     */
-    @PostMapping("/update_dev")
+    @PostMapping("/updateDev")
     public Map<String, Object> updateDevInfo(@RequestBody Dev dev){
         return devService.updateDevInfo(dev);
     }
     //更新emqx的post的设备连接信息
     //状态主题:update_status/:productName/:deviceName/:messageId
     //更新设备表devs的连接状态信息
-    @PostMapping("/up_status")
+    @PostMapping("/upStatus")
     public Map<String, Object> uploadStatus(@RequestBody DevBridgeInfo devBridgeInfo){
         return devService.uploadStatus(devBridgeInfo);
     }
@@ -236,7 +238,7 @@ public class DevController {
         return cmdToDevices.RestTemplateTestPost(ProductName, DeviceName, CommandName, RequestID, Payload);
 //        return cmdMessage.toString();
     }
-    @GetMapping("/down_inf/{measurement}")
+    @GetMapping("/downInf/{measurement}")
     public ReqResults influxToExcel(@PathVariable("measurement") String measurement) throws IOException {
         /**
         * @description: 导出influx指定数据库数据
@@ -276,7 +278,7 @@ public class DevController {
 
     }
 
-    @PostMapping("/upload_img")
+    @PostMapping("/uploadImg")
     @ResponseBody
     public ReqResults uploadImag(@RequestParam("img") MultipartFile req, ImgParams imgModel){
         /**
@@ -324,7 +326,7 @@ public class DevController {
     * @author: zhanghc
     * @time: 2023/2/22 22:35
     */
-    @PostMapping("/update_tsl/{DeviceName}")
+    @PostMapping("/updateTsl/{DeviceName}")
     public String  upTsl(@RequestBody String jsonStr, @PathVariable("DeviceName") String DeviceName){
         DevTslAcl devTslAcl = new DevTslAcl(DeviceName, jsonStr);
         tslDaoImp.updateTslByDeviceName(devTslAcl);
@@ -343,13 +345,29 @@ public class DevController {
 * @author: zhanghc
 * @time: 2023/2/27 9:19
 */
-    @GetMapping("/get_tsl/{DeviceName}")
+    @GetMapping("/getTsl/{DeviceName}")
     public String  getTsl(@PathVariable("DeviceName") String DeviceName){
         System.out.println(tslDaoImp.findOneByDeviceName(DeviceName).getDevice_tsl());
         return tslDaoImp.findOneByDeviceName(DeviceName).getDevice_tsl();
     }
 
-
+    //推送数据接口
+    @GetMapping("/socket/push/{cid}")
+    public Map pushToWeb(@PathVariable String cid, String message) {
+        Map<String,Object> result = new HashMap<>();
+        Map<String,Object> params = new HashMap<>();
+        params.put("temp", "0");
+        params.put("hum", "10");
+        String jsonString = JSONObject.toJSONString(params);
+        try {
+            WebSocketServer.sendInfo(jsonString, cid);
+            result.put("code", cid);
+            result.put("msg", message);
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        return result;
+    }
     /******************以下为测试文件*******************************************************/
     //设备注册接口，并存储设备信息到MongoDB
 //    @PostMapping("/applym")

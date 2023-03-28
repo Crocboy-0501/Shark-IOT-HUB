@@ -1,0 +1,53 @@
+
+spring:
+  data:
+    mongodb:
+      uri: mongodb://iothub:iothub@101.43.193.226:27017/iothub?authSource=admin
+
+
+  datasource:
+    username: user1
+    password:
+    url: jdbc:mysql://101.43.193.226:3306/sharkiot?serverTimezone=Asia/Shanghai&userUnicode=true&characterEncoding=utf-8
+
+  influx:
+    url: http://101.43.193.226:8086
+    database: iothub
+#    username: iot
+#    password: iot
+  mvc:
+    pathmatch:
+      matching-strategy: ant_path_matcher
+
+  application:
+    name: springboot_rabbitmq
+  rabbitmq:
+    host: 101.43.193.226
+    port: 5672
+    username: iothub
+    password: iothub
+    virtual-host: /iothub
+
+  redis:
+    host: 101.43.193.226
+    port: 6379
+    database: 0
+
+# Mybatis Plus
+mybatis-plus:
+  global-config:
+    db-config:
+      table-underline: false # 设置表明不使用下划线方式
+  configuration:
+    map-underscore-to-camel-case: false # 设置字段不使用下划线方式
+
+# post EMQX头部认证
+apiAuth:
+  api_key: "b30d85f220b4e37f"
+  api_secret: "Gn0mTtKx9CTJvEOJVS9ANCUWgsZJEMbC29CFqfaYEXMnJB"
+
+imgFile:
+  file_path: "./"
+
+server:
+  port: 9091

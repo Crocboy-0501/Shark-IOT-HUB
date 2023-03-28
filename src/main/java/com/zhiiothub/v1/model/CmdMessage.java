@@ -1,10 +1,13 @@
 package com.zhiiothub.v1.model;
 
+import lombok.Data;
+
 import java.util.HashMap;
 import java.util.Map;
 /**
  * 下发命令json模型
  * */
+@Data
 public class CmdMessage {
     private String productName;
     private String deviceName;

@@ -56,7 +56,11 @@
             <artifactId>poi-ooxml</artifactId>
             <version>5.0.0</version>
         </dependency>
-<!--        <dependency>-->
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-websocket</artifactId>
+        </dependency>
+        <!--        <dependency>-->
 <!--            <groupId>com.influxdb</groupId>-->
 <!--            <artifactId>influxdb-client-java</artifactId>-->
 <!--            <version>4.0.0</version>-->

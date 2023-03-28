@@ -24,7 +24,7 @@ import java.util.Map;
  */
 @RestController
 @CrossOrigin
-@RequestMapping("/api")
+@RequestMapping("/usr")
 public class UserController {
     @Autowired
     private UserDao userDao;
@@ -74,23 +74,23 @@ public class UserController {
 //        userLogDao.insert(userLog);
         return "ok";
     }
-    @GetMapping("/users")
+    @GetMapping("/userList")
     public List<User> getAllUsers(){
         List<User> users = userDao.selectList(null);
         users.forEach(user -> System.out.println("user = " + user));
         return users;
     }
-    @DeleteMapping("/user/{user_id}")
-    public String delUserById(@PathVariable String user_id){
-        userDao.deleteById(user_id);
+    @DeleteMapping("/{userId}")
+    public String delUserById(@PathVariable String userId){
+        userDao.deleteById(userId);
         QueryWrapper<Dev> queryWrapper = new QueryWrapper<>();
-        queryWrapper.eq("user_id", user_id);
+        queryWrapper.eq("user_id", userId);
         devDao.delete(queryWrapper);
         System.out.println("删除用户成功");
         return "ok";
     }
 
-    @GetMapping("/get_ulogs/{measurement}")
+    @GetMapping("/getUserLogs/{measurement}")
     /**
      * @description: 查找{measurement}日志库的数据
      * @return: java.util.List<com.zhiiothub.v1.model.InfluxMod>
