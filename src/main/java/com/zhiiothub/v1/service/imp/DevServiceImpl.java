@@ -1,6 +1,7 @@
 package com.zhiiothub.v1.service.imp;
 
 import com.alibaba.fastjson.JSON;
+import com.alibaba.fastjson.JSONObject;
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.zhiiothub.v1.dao.DevDao;
 import com.zhiiothub.v1.dao.imp.TslDaoImp;
@@ -10,6 +11,7 @@ import com.zhiiothub.v1.model.DevBridgeInfo;
 import com.zhiiothub.v1.model.InfluxMod;
 import com.zhiiothub.v1.model.UpMessage;
 import com.zhiiothub.v1.service.DevService;
+import com.zhiiothub.v1.service.WebSocketServer;
 import com.zhiiothub.v1.utils.LogsUtils;
 import org.springframework.amqp.rabbit.core.RabbitTemplate;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -109,12 +111,20 @@ public class DevServiceImpl implements DevService {
 //        influxMod.setFields(upMessage.getData());
         System.out.println(influxMod.toString());
         System.out.println("收到数据！！！！");
+        //websocket发送数据给前端实时显示
+        String jsonString = JSONObject.toJSONString(upMessage.getParams());
+        try {
+            System.out.println("实时数据" + jsonString);
+            WebSocketServer.sendInfo(jsonString, deviceName);
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
         //对象序列化
         //使用rabbitMQ路由模型 exchange为directs模式 routerkey为deviceName
         rabbitTemplate.convertAndSend("directs",deviceName, JSON.toJSONString(influxMod.getFields()));
         /* 解析messageId，redis查找messageId完成消息去重 */
-        if(!stringRedisTemplate.opsForSet().isMember("messageID", upMessage.getMessageID())){
-            stringRedisTemplate.opsForSet().add("messageID",upMessage.getMessageID());
+        if(!stringRedisTemplate.opsForSet().isMember("messageid", upMessage.getMessageid())){
+            stringRedisTemplate.opsForSet().add("messageid",upMessage.getMessageid());
             String topic = upMessage.getTopic();
             Pattern pattern = Pattern.compile("\\/sys\\/.*?\\/(.{8})\\/.*");
             Matcher matcher = pattern.matcher(topic);

@@ -17,7 +17,7 @@ public class UpMessage {
     //influxmod field类型必须是<String , String>
     private Map<String, Object> params = new HashMap<>();
     private String topic;
-    private String messageID;
-    private String version;
+    private String messageid;
     private String method;
+    private String name;
 }
